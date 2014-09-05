@@ -16,11 +16,11 @@
 		<include file="$(find neo_teleop)/ros/launch/teleop.launch">
 		</include>
 
-		<!-- robot model >
-    		<param name="robot_description" command="$(find xacro)/xacro.py '$(find neo_robot_descriptions)/mpo_500/mpo_500.urdf.xacro'" />
+		<!-- robot model -->
+    		<param name="robot_description" command="$(find xacro)/xacro.py '$(find neo_robot_descriptions)/mpo_500/mpo_500.urdf'" />
 		<node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen" >
 			<param name="publish_frequency" type="double" value="50.0" />
-		</node-->
+		</node>
 
 		<!--tf broadcaster -->
 		<include file="$(find neo_base_mpo_500)/ros/launch/static_transform_pub/base_link_to_laserfront_tf_broadcaster.launch"/>
