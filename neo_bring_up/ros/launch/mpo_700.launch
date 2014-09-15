@@ -29,6 +29,11 @@
 
 	<!--teleoperation-->
 	<include file="$(find neo_teleop)/ros/launch/teleop.launch"/>
+        <!--base velocity smoother-->
+	<node pkg="cob_base_velocity_smoother" type="cob_base_velocity_smoother" name="base_velocity_smoother" respawn="false" output="screen">
+		<remap from="input" to="cmd_vel"/>
+		<remap from="output" to="cmd_vel_smooth"/>
+	</node>
 		
 	</group>
 </launch>
