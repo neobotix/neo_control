@@ -47,7 +47,6 @@ private:
   void joyCallback(const sensor_msgs::Joy::ConstPtr& joy);
 
   int linear_x, linear_y, angular_z;
-  double last_linear_x[20], last_linear_y[20], last_angular_z[20];
   double l_scale_x, l_scale_y, a_scale_z;
   ros::Publisher vel_pub_;
   ros::Subscriber joy_sub_;
@@ -107,35 +106,10 @@ TeleopNeo::TeleopNeo():
 
 void TeleopNeo::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 {
-  for(int i = 18; i >= 0; i--)
-  {
-	last_linear_x[i+1] = last_linear_x[i];
-	last_linear_y[i+1] = last_linear_y[i];
-	last_angular_z[i+1] = last_angular_z[i];
-  }
-  
-  last_linear_x[0] = l_scale_x*joy->axes[linear_x];
-  last_linear_y[0] = l_scale_y*joy->axes[linear_y];
-  last_angular_z[0] = a_scale_z*joy->axes[angular_z];
-  ROS_INFO("X: %f",last_linear_x[0]);
-  vel.linear.x = 0;
-  vel.linear.y = 0;
-  vel.angular.z = 0;
-  for(int g = 0; g < 20; g++)
-  {
-	vel.linear.x = vel.linear.x + last_linear_x[g];
-	vel.linear.y = vel.linear.y + last_linear_y[g];
-	vel.angular.z = vel.angular.z + last_angular_z[g];
-  }
-  vel.linear.x = (vel.linear.x/20);
-  vel.linear.y = (vel.linear.y/20);
-  vel.angular.z = (vel.angular.z/20);
   activeJoy = true;
-  /*
   vel.angular.z = a_scale_z*joy->axes[angular_z];
   vel.linear.x = l_scale_x*joy->axes[linear_x];
   vel.linear.y = l_scale_y*joy->axes[linear_y];
-  */
   deadman = (bool)joy->buttons[deadman_button];
   lastCmd = ros::Time::now();
 }
