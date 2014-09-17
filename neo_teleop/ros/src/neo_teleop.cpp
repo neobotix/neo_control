@@ -43,11 +43,17 @@ public:
   TeleopNeo();
   ros::NodeHandle nh_;
   void sendCmd();
+  double l_scale_x, l_scale_y, a_scale_z;
+  double joy_command_x;
+  double joy_command_y;
+  double joy_command_z;
+  double last_joy_commands_x[20];
+  double last_joy_commands_y[20]; 
+  double last_joy_commands_z[20];
 private:
   void joyCallback(const sensor_msgs::Joy::ConstPtr& joy);
-
+  bool smooth;
   int linear_x, linear_y, angular_z;
-  double l_scale_x, l_scale_y, a_scale_z;
   ros::Publisher vel_pub_;
   ros::Subscriber joy_sub_;
   geometry_msgs::Twist vel;
@@ -64,8 +70,28 @@ TeleopNeo::TeleopNeo():
 {
   activeJoy = false;
   deadman = false;
+  smooth = true;
   lastCmd = ros::Time(0);
   double timeout;
+  joy_command_x = 0;
+  joy_command_y = 0;
+  joy_command_z = 0;
+  for(int i = 0; i < 20; i++)
+  {
+	last_joy_commands_x[i] = 0;
+	last_joy_commands_y[i] = 0;
+	last_joy_commands_z[i] = 0;
+  }
+  if(nh_.hasParam("smooth"))
+  {
+  	nh_.getParam("smooth", smooth);
+	ROS_INFO("smooth: %i", smooth);
+  }
+  else
+  {
+  	ROS_INFO("smooth nicht gesetzt, verwende Standard: True");
+  	smooth = true;
+  }
   if(nh_.hasParam("timeOut"))
   {
   	nh_.getParam("timeOut", timeout);
@@ -107,17 +133,51 @@ TeleopNeo::TeleopNeo():
 void TeleopNeo::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 {
   activeJoy = true;
-  vel.angular.z = a_scale_z*joy->axes[angular_z];
-  vel.linear.x = l_scale_x*joy->axes[linear_x];
-  vel.linear.y = l_scale_y*joy->axes[linear_y];
   deadman = (bool)joy->buttons[deadman_button];
   lastCmd = ros::Time::now();
+  joy_command_z = a_scale_z*joy->axes[angular_z];
+  joy_command_x = l_scale_x*joy->axes[linear_x];
+  joy_command_y = l_scale_y*joy->axes[linear_y];
+  
 }
 
 void TeleopNeo::sendCmd()
 {
   if((ros::Time::now() - lastCmd < timeOut) || deadman == true)
   {
+    if(smooth == true)
+    {
+	    //Array neu anordnen
+	    for(int i = 18; i >= 0; i--)
+	    {
+		last_joy_commands_x[i+1] = last_joy_commands_x[i];
+		last_joy_commands_y[i+1] = last_joy_commands_y[i];
+		last_joy_commands_z[i+1] = last_joy_commands_z[i];
+	    }
+	    //neuen wert in position 0 schreiben
+	    last_joy_commands_x[0] = joy_command_x;
+	    last_joy_commands_y[0] = joy_command_y;
+	    last_joy_commands_z[0] = joy_command_z;
+	    //mittelwert bilden
+	    vel.angular.z = 0;
+	    vel.linear.x = 0;
+	    vel.linear.y = 0;
+	    for(int g = 0; g < 20; g++)
+	    {
+		vel.angular.z += last_joy_commands_z[g];
+		vel.linear.x += last_joy_commands_x[g];
+		vel.linear.y += last_joy_commands_y[g];
+	    }
+	    vel.angular.z = (vel.angular.z/20);
+	    vel.linear.x = (vel.linear.x/20);
+	    vel.linear.y = (vel.linear.y/20);
+    }
+    else
+    {
+	vel.angular.z = joy_command_z;
+	vel.linear.x = joy_command_x;
+	vel.linear.y = joy_command_y;
+    }
     vel_pub_.publish(vel);
   }
   else
@@ -136,9 +196,9 @@ void TeleopNeo::sendCmd()
 
 int main(int argc, char** argv)
 {
+  
   ros::init(argc, argv, "teleop_Neo");
   TeleopNeo teleop_Neo;
-
   ros::Rate loop_rate(50); // Hz
   while(teleop_Neo.nh_.ok())
   {
