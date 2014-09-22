@@ -71,8 +71,8 @@ auto_recover::auto_recover()
 	button = false;
 	EMS_sub = n.subscribe("/emergency_stop_state", 1, &auto_recover::EMSCallback, this);
 	joy_sub = n.subscribe("/joy", 1, &auto_recover::joyCallback, this);
-	client_init = n.serviceClient<cob_srvs::Trigger>("init");
-	client_recover = n.serviceClient<cob_srvs::Trigger>("recover");
+	client_init = n.serviceClient<cob_srvs::Trigger>("/init");
+	client_recover = n.serviceClient<cob_srvs::Trigger>("/recover");
 	//get Parameter from parameter-server
 	if(n.hasParam("ButtonANr"))
   	{
@@ -115,7 +115,7 @@ void auto_recover::EMSCallback(const neo_msgs::EmergencyStopState::ConstPtr& msg
 void auto_recover::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 {
 	//Knopf-A
-	button = (bool)joy->buttons[0];
+	button = (bool)joy->buttons[button_A_nr];
 	if(button == true)
 	{
 		ROS_INFO("Button A pressed");
@@ -130,7 +130,7 @@ void auto_recover::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 		}
 	}
 	//Knopf-B
-  	button = (bool)joy->buttons[1];
+  	button = (bool)joy->buttons[button_B_nr];
 	if(button == true)
 	{
 		ROS_INFO("Button B pressed");
