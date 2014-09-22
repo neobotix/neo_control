@@ -29,5 +29,8 @@
 
 	<!--teleoperation-->
 	<include file="$(find neo_teleop)/ros/launch/teleop.launch"/>
+
+	<!--auto_recover-->
+	<include file="$(find neo_base_mpo_700)/ros/launch/auto_recover/auto_recover.launch"/>
 	</group>
 </launch>

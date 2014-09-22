@@ -32,7 +32,13 @@ are License Agreement (BSD License)
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
+/*
+Used Parameters:
 
+ButtonANr = Number of Button on Joystic for the init service
+ButtonBNr = Number of Button on Joystic for the recover service
+
+*/
 
 #include <ros/ros.h>
 #include <sensor_msgs/Joy.h>
@@ -50,6 +56,8 @@ private:
   void EMSCallback(const neo_msgs::EmergencyStopState::ConstPtr& msg);
   
   bool button;
+  int button_A_nr;
+  int button_B_nr;
   ros::Subscriber joy_sub;
   ros::Subscriber EMS_sub;
   ros::ServiceClient client_init;
@@ -65,6 +73,25 @@ auto_recover::auto_recover()
 	joy_sub = n.subscribe("/joy", 1, &auto_recover::joyCallback, this);
 	client_init = n.serviceClient<cob_srvs::Trigger>("init");
 	client_recover = n.serviceClient<cob_srvs::Trigger>("recover");
+	//get Parameter from parameter-server
+	if(n.hasParam("ButtonANr"))
+  	{
+  		n.getParam("ButtonANr", button_A_nr);
+  	}
+  	else
+  	{
+  		ROS_WARN("ButtonANr not found, using standard: 0");
+  		button_A_nr = 0;
+  	}
+	if(n.hasParam("ButtonBNr"))
+  	{
+  		n.getParam("ButtonBNr", button_B_nr);
+  	}
+  	else
+  	{
+  		ROS_WARN("ButtonBNr not found, using standard: 1");
+  		button_A_nr = 1;
+  	}
 }
 
 void auto_recover::EMSCallback(const neo_msgs::EmergencyStopState::ConstPtr& msg)
